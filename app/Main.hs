@@ -41,9 +41,11 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
+    -- Process command line arguments
     [filename] -> processFile filename Nothing
     [filename, "-s", searchStr] -> processFile filename (Just searchStr)
     _ -> do
+      -- If no arguments were given
       setSGR [SetColor Foreground Vivid Blue]
       putStrLn "Usage: wordc <filename> [-s <search_string>]"
       setSGR [Reset]

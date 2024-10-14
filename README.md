@@ -17,8 +17,9 @@ cabal run wordc <filename>
 
 ## Example
 ``` bash
-cabal run wordc ./README.md
-Lines: 24
-Words: 85
-Chars: 469
+cabal run wordc -- ./README.md -s a
+Lines: 25
+Words: 91
+Chars: 499
+Search occurrences: 15
 ```
