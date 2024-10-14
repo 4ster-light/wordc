@@ -2,35 +2,70 @@ import Control.Exception (IOException, catch)
 import System.Environment (getArgs)
 import System.Exit (exitFailure)
 import System.IO (IOMode(ReadMode), hGetContents, openFile)
+import Data.List (isInfixOf)
+import System.Console.ANSI
+import Data.Foldable (forM_)
 
+-- Data type to hold all statistics
+data Stats = Stats
+  { lineCount :: Int
+  , wordCount :: Int
+  , charCount :: Int
+  , searchCount :: Maybe Int
+  }
+
+-- Read the contents of a file
 readFileContents :: FilePath -> IO String
 readFileContents filename = do
   handle <- openFile filename ReadMode
   hGetContents handle
-  
-countStats :: String -> (Int, Int, Int)
-countStats text = (lineCount, wordCount, charCount)
-  where
-    lineCount = length (lines text)
-    wordCount = length (words text)
-    charCount = length text
+
+-- Count statistics from the text content
+countStats :: String -> Maybe String -> Stats
+countStats text searchStr = Stats
+  { lineCount = length (lines text)
+  , wordCount = length (words text)
+  , charCount = length text
+  , searchCount = fmap (\s -> length $ filter (isInfixOf s) (lines text)) searchStr
+  }
+
+-- Print a statistic with a colored label
+printColoredStat :: String -> Int -> IO ()
+printColoredStat label value = do
+  setSGR [SetColor Foreground Vivid Green]
+  putStr label
+  setSGR [Reset]
+  print value
 
 main :: IO ()
 main = do
   args <- getArgs
-  if length args /= 1
-    then do
-      putStrLn "Usage: wordc <filename>"
+  case args of
+    [filename] -> processFile filename Nothing
+    [filename, "-s", searchStr] -> processFile filename (Just searchStr)
+    _ -> do
+      setSGR [SetColor Foreground Vivid Blue]
+      putStrLn "Usage: wordc <filename> [-s <search_string>]"
+      setSGR [Reset]
       exitFailure
-    else do
-      let filename = head args
-      contents <- catch (readFileContents filename) handler
-      let (linesCount, wordsCount, charsCount) = countStats contents
-      putStrLn $ "Lines: " ++ show linesCount
-      putStrLn $ "Words: " ++ show wordsCount
-      putStrLn $ "Chars: " ++ show charsCount
   where
+    -- Process the file and print statistics
+    processFile filename searchStr = do
+      contents <- catch (readFileContents filename) handler
+      let stats = countStats contents searchStr
+      
+      -- Print basic statistics
+      printColoredStat "Lines: " (lineCount stats)
+      printColoredStat "Words: " (wordCount stats)
+      printColoredStat "Chars: " (charCount stats)
+      
+      -- Print search occurrences if a search string was provided
+      forM_ (searchCount stats) (printColoredStat "Search occurrences: ")
+
+    -- Error handler for file reading
     handler :: IOException -> IO String
     handler e = do
+      setSGR [SetColor Foreground Vivid Red]
       putStrLn $ "Error: " ++ show e
+      setSGR [Reset]
       exitFailure
