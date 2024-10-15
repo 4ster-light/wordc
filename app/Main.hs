@@ -1,17 +1,17 @@
 import Control.Exception (IOException, catch)
-import System.Environment (getArgs)
-import System.Exit (exitFailure)
-import System.IO (IOMode(ReadMode), hGetContents, openFile)
+import Data.Foldable (forM_)
 import Data.List (isInfixOf)
 import System.Console.ANSI
-import Data.Foldable (forM_)
+import System.Environment (getArgs)
+import System.Exit (exitFailure)
+import System.IO (IOMode (ReadMode), hGetContents, openFile)
 
 -- Data type to hold all statistics
 data Stats = Stats
-  { lineCount :: Int
-  , wordCount :: Int
-  , charCount :: Int
-  , searchCount :: Maybe Int
+  { lineCount :: Int,
+    wordCount :: Int,
+    charCount :: Int,
+    searchCount :: Maybe Int
   }
 
 -- Read the contents of a file
@@ -22,12 +22,13 @@ readFileContents filename = do
 
 -- Count statistics from the text content
 countStats :: String -> Maybe String -> Stats
-countStats text searchStr = Stats
-  { lineCount = length (lines text)
-  , wordCount = length (words text)
-  , charCount = length text
-  , searchCount = fmap (\s -> length $ filter (isInfixOf s) (lines text)) searchStr
-  }
+countStats text searchStr =
+  Stats
+    { lineCount = length (lines text),
+      wordCount = length (words text),
+      charCount = length text,
+      searchCount = fmap (\s -> length $ filter (isInfixOf s) (lines text)) searchStr
+    }
 
 -- Print a statistic with a colored label
 printColoredStat :: String -> Int -> IO ()
@@ -55,12 +56,12 @@ main = do
     processFile filename searchStr = do
       contents <- catch (readFileContents filename) handler
       let stats = countStats contents searchStr
-      
+
       -- Print basic statistics
       printColoredStat "Lines: " (lineCount stats)
       printColoredStat "Words: " (wordCount stats)
       printColoredStat "Chars: " (charCount stats)
-      
+
       -- Print search occurrences if a search string was provided
       forM_ (searchCount stats) (printColoredStat "Search occurrences: ")
 
