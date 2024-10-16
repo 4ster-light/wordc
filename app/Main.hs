@@ -1,3 +1,5 @@
+module Main where
+
 import Control.Exception (IOException, catch)
 import Data.Foldable (forM_)
 import Data.List (isInfixOf)
